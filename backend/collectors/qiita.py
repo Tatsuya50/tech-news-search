@@ -40,6 +40,7 @@ class QiitaCollector(BaseCollector):
                         published = datetime.fromisoformat(
                             item["created_at"].replace("Z", "+00:00")
                         ).replace(tzinfo=timezone.utc)
+                        body = item.get("body") or ""
                         articles.append(
                             ArticleData(
                                 source="qiita",
@@ -48,7 +49,8 @@ class QiitaCollector(BaseCollector):
                                 url=item["url"],
                                 published_at=published,
                                 language="ja",
-                                summary=item.get("body", "")[:500] if item.get("body") else None,
+                                summary=body[:500] or None,
+                                body_text=body or None,
                                 author=item.get("user", {}).get("id"),
                                 tags=[t["name"] for t in item.get("tags", [])],
                                 like_count=item.get("likes_count", 0),

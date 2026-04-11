@@ -1,24 +1,32 @@
 <template>
   <div>
-    <!-- 統計バー -->
-    <v-row class="mb-4" dense>
-      <v-col v-for="stat in statCards" :key="stat.label" cols="6" sm="3">
-        <v-card variant="tonal" :color="stat.color" rounded="lg">
-          <v-card-text class="pa-3 text-center">
-            <div class="text-h5 font-weight-bold">{{ stat.value }}</div>
-            <div class="text-caption">{{ stat.label }}</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <div class="d-flex align-center mb-3">
-      <h1 class="text-h5 font-weight-bold">トレンド</h1>
-      <v-chip class="ml-3" size="small" color="primary" variant="tonal">
-        {{ store.total }} 件
-      </v-chip>
+    <!-- Stats strip -->
+    <div v-if="stats" class="stat-strip">
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.total_articles.toLocaleString() }}</div>
+        <div class="stat-label">TOTAL</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number gold">{{ stats.important_articles }}</div>
+        <div class="stat-label">SAVED</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number accent">{{ stats.indexed_articles }}</div>
+        <div class="stat-label">INDEXED</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ arxivCount }}</div>
+        <div class="stat-label">ARXIV</div>
+      </div>
     </div>
 
+    <!-- Page heading -->
+    <div class="page-heading">
+      <span class="page-title">Intelligence Feed</span>
+      <span class="page-count">{{ store.total }} 件</span>
+    </div>
+
+    <!-- Filters -->
     <SourceFilter
       v-model:sources="store.selectedSources"
       v-model:language="store.selectedLanguage"
@@ -26,32 +34,35 @@
       @update:language="onFilterChange"
     />
 
-    <v-alert v-if="store.error" type="error" class="mb-4" closable>
-      {{ store.error }}
-    </v-alert>
+    <!-- Error -->
+    <div v-if="store.error" class="error-bar">
+      <span>{{ store.error }}</span>
+      <button class="error-close" @click="store.error = null">✕</button>
+    </div>
 
-    <div v-if="store.loading" class="d-flex justify-center py-8">
-      <v-progress-circular indeterminate color="primary" />
+    <!-- Loading -->
+    <div v-if="store.loading" class="loading-state">
+      <div class="spinner" />
     </div>
 
     <template v-else>
-      <v-row>
-        <v-col
+      <!-- Articles -->
+      <div v-if="store.items.length > 0" class="article-grid">
+        <ArticleCard
           v-for="article in store.items"
           :key="article.id"
-          cols="12"
-          sm="6"
-          lg="4"
-        >
-          <ArticleCard :article="article" @toggle-important="onToggleImportant" />
-        </v-col>
-      </v-row>
-
-      <div v-if="store.items.length === 0" class="text-center py-12 text-medium-emphasis">
-        <v-icon size="64" class="mb-4">mdi-newspaper-variant-outline</v-icon>
-        <div>記事がありません。「今すぐ収集」を押して収集を開始してください。</div>
+          :article="article"
+          @toggle-important="onToggleImportant"
+        />
       </div>
 
+      <!-- Empty -->
+      <div v-else class="empty-state">
+        <div class="empty-icon">◈</div>
+        <div class="empty-text">NO ARTICLES YET — CLICK ↺ 収集 TO FETCH</div>
+      </div>
+
+      <!-- Pagination -->
       <v-pagination
         v-if="store.totalPages > 1"
         v-model="store.page"
@@ -64,7 +75,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
+import { ref } from 'vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 import SourceFilter from '@/components/SourceFilter.vue'
 import { useArticlesStore } from '@/stores/articles'
@@ -73,28 +85,16 @@ import { statsApi, type StatsOverview } from '@/api/client'
 const store = useArticlesStore()
 const stats = ref<StatsOverview | null>(null)
 
-const statCards = computed(() => {
-  if (!stats.value) return []
-  const sourceMap = Object.fromEntries(stats.value.by_source.map((s) => [s.source, s.count]))
-  return [
-    { label: '総記事数', value: stats.value.total_articles, color: 'primary' },
-    { label: '重要マーク', value: stats.value.important_articles, color: 'amber' },
-    { label: 'RAG登録済', value: stats.value.indexed_articles, color: 'green' },
-    {
-      label: 'arXiv論文',
-      value: sourceMap['arxiv'] ?? 0,
-      color: 'purple',
-    },
-  ]
+const arxivCount = computed(() => {
+  if (!stats.value) return 0
+  return stats.value.by_source.find((s) => s.source === 'arxiv')?.count ?? 0
 })
 
 async function loadStats() {
   try {
     const resp = await statsApi.overview()
     stats.value = resp.data
-  } catch {
-    // 無視
-  }
+  } catch { /* ignore */ }
 }
 
 async function onToggleImportant(id: number) {
@@ -113,3 +113,51 @@ onMounted(async () => {
 
 watch(() => store.selectedLanguage, onFilterChange)
 </script>
+
+<style scoped>
+/* ── Stats strip ── */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 0.75rem;
+  text-align: center;
+  transition: border-color var(--t);
+}
+
+.stat-card:hover {
+  border-color: var(--border-2);
+}
+
+.stat-number {
+  font-family: var(--font-ui);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.02em;
+}
+
+.stat-number.accent { color: var(--accent); }
+.stat-number.gold   { color: var(--gold); }
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .stat-strip { grid-template-columns: repeat(2, 1fr); }
+}
+</style>

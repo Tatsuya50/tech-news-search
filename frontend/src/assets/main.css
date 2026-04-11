@@ -1,35 +1,215 @@
-@import './base.css';
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* ── Design Tokens ── */
+:root {
+  --bg: #080810;
+  --surface: #0e0e1c;
+  --surface-2: #141427;
+  --border: #1d1d38;
+  --border-2: #2d2d50;
+  --text: #d5d9ff;
+  --muted: #58587a;
+  --accent: #c8ff5e;
+  --accent-dim: rgba(200, 255, 94, 0.07);
+  --accent-glow: rgba(200, 255, 94, 0.18);
+  --gold: #ffc857;
+  --gold-dim: rgba(255, 200, 87, 0.08);
+
+  --qiita: #4ade80;
+  --zenn: #60a5fa;
+  --note: #fb923c;
+  --arxiv: #e879f9;
+
+  --font-ui: 'Syne', system-ui, sans-serif;
+  --font-title: 'Lora', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  --radius: 8px;
+  --radius-sm: 4px;
+  --t: 150ms ease;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+/* ── Vue app root ── */
 #app {
-  max-width: 1280px;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+}
+
+/* ── Vuetify overrides ── */
+.v-application {
+  background: var(--bg) !important;
+  font-family: var(--font-ui) !important;
+  color: var(--text) !important;
+}
+.v-main {
+  background: var(--bg) !important;
+}
+.v-app-bar {
+  box-shadow: none !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.v-app-bar .v-toolbar__content {
+  padding: 0 !important;
+}
+
+/* ── Main content wrapper ── */
+.main-content {
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+  padding: 1.5rem;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+/* ── Spinner ── */
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border-2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 5rem 2rem;
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 5rem 2rem;
+}
+.empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.2;
+  margin-bottom: 1rem;
+}
+.empty-text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
 
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+/* ── Error ── */
+.error-bar {
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.25);
+  border-radius: var(--radius);
+  color: #ff8080;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.error-close {
+  background: none;
+  border: none;
+  color: #ff8080;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.6;
+  transition: opacity var(--t);
+  padding: 0;
+  line-height: 1;
+}
+.error-close:hover { opacity: 1; }
+
+/* ── Page heading ── */
+.page-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+.page-title {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.page-count {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  padding: 0.15em 0.7em;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+}
+
+/* ── Article grid ── */
+.article-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.875rem;
+}
+.article-grid > *:nth-child(1)  { animation: fadeUp 0.35s ease both 0ms;   }
+.article-grid > *:nth-child(2)  { animation: fadeUp 0.35s ease both 50ms;  }
+.article-grid > *:nth-child(3)  { animation: fadeUp 0.35s ease both 100ms; }
+.article-grid > *:nth-child(4)  { animation: fadeUp 0.35s ease both 150ms; }
+.article-grid > *:nth-child(5)  { animation: fadeUp 0.35s ease both 200ms; }
+.article-grid > *:nth-child(6)  { animation: fadeUp 0.35s ease both 250ms; }
+.article-grid > *:nth-child(7)  { animation: fadeUp 0.35s ease both 300ms; }
+.article-grid > *:nth-child(8)  { animation: fadeUp 0.35s ease both 350ms; }
+.article-grid > *:nth-child(9)  { animation: fadeUp 0.35s ease both 400ms; }
+.article-grid > *:nth-child(10) { animation: fadeUp 0.35s ease both 450ms; }
+.article-grid > *:nth-child(n+11) { animation: fadeUp 0.35s ease both 500ms; }
+
+/* ── Pagination ── */
+.v-pagination .v-btn {
+  font-family: var(--font-mono) !important;
+  font-size: 0.72rem !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .main-content { padding: 1rem; }
+  .article-grid { grid-template-columns: 1fr; }
 }
