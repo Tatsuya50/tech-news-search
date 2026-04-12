@@ -14,6 +14,7 @@ async def list_articles(
     language: str | None = Query(None),
     tags: list[str] | None = Query(None),
     is_important: bool | None = Query(None),
+    keyword: str | None = Query(None),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -24,6 +25,7 @@ async def list_articles(
         language=language,
         tags=tags,
         is_important=is_important,
+        keyword=keyword,
         page=page,
         per_page=per_page,
     )

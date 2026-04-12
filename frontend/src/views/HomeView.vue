@@ -26,6 +26,24 @@
       <span class="page-count">{{ store.total }} 件</span>
     </div>
 
+    <!-- Keyword search -->
+    <div class="keyword-search">
+      <input
+        v-model="store.searchKeyword"
+        class="keyword-input"
+        type="search"
+        placeholder="キーワードで検索（タイトル・本文）"
+        @keydown.enter="onFilterChange"
+        @input="onKeywordInput"
+      />
+      <button
+        v-if="store.searchKeyword"
+        class="keyword-clear"
+        @click="clearKeyword"
+      >✕</button>
+      <button class="keyword-btn" @click="onFilterChange">検索</button>
+    </div>
+
     <!-- Filters -->
     <SourceFilter
       v-model:sources="store.selectedSources"
@@ -107,6 +125,17 @@ function onFilterChange() {
   store.fetchArticles()
 }
 
+let keywordTimer: ReturnType<typeof setTimeout> | null = null
+function onKeywordInput() {
+  if (keywordTimer) clearTimeout(keywordTimer)
+  keywordTimer = setTimeout(() => onFilterChange(), 400)
+}
+
+function clearKeyword() {
+  store.searchKeyword = ''
+  onFilterChange()
+}
+
 onMounted(async () => {
   await Promise.all([store.fetchArticles(), loadStats()])
 })
@@ -159,5 +188,69 @@ watch(() => store.selectedLanguage, onFilterChange)
 
 @media (max-width: 600px) {
   .stat-strip { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Keyword search ── */
+.keyword-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.keyword-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  padding: 0.5rem 0.85rem;
+  outline: none;
+  transition: border-color var(--t), box-shadow var(--t);
+}
+
+.keyword-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.keyword-input::placeholder {
+  color: var(--muted);
+}
+
+.keyword-clear {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.4rem 0.3rem;
+  line-height: 1;
+  transition: color var(--t);
+}
+
+.keyword-clear:hover {
+  color: var(--text);
+}
+
+.keyword-btn {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  padding: 0.48em 1.1em;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--t);
+  white-space: nowrap;
+}
+
+.keyword-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 </style>

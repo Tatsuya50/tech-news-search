@@ -63,6 +63,7 @@ export const articlesApi = {
     language?: string
     tags?: string[]
     is_important?: boolean
+    keyword?: string
     page?: number
     per_page?: number
   }) {

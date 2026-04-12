@@ -1,6 +1,6 @@
 import math
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.article import Article
@@ -13,6 +13,7 @@ async def get_articles(
     language: str | None = None,
     tags: list[str] | None = None,
     is_important: bool | None = None,
+    keyword: str | None = None,
     page: int = 1,
     per_page: int = 20,
 ) -> ArticleListResponse:
@@ -23,6 +24,9 @@ async def get_articles(
         q = q.where(Article.language == language)
     if is_important is not None:
         q = q.where(Article.is_important == is_important)
+    if keyword:
+        like = f"%{keyword}%"
+        q = q.where(or_(Article.title.ilike(like), Article.summary.ilike(like)))
 
     count_q = select(func.count()).select_from(q.subquery())
     total = await session.scalar(count_q) or 0

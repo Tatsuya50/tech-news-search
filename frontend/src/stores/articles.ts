@@ -13,6 +13,7 @@ export const useArticlesStore = defineStore('articles', () => {
 
   const selectedSources = ref<string[]>([])
   const selectedLanguage = ref<string>('')
+  const searchKeyword = ref<string>('')
 
   async function fetchArticles(isImportant?: boolean) {
     loading.value = true
@@ -25,6 +26,7 @@ export const useArticlesStore = defineStore('articles', () => {
       if (selectedSources.value.length > 0) params.source = selectedSources.value
       if (selectedLanguage.value) params.language = selectedLanguage.value
       if (isImportant !== undefined) params.is_important = isImportant
+      if (searchKeyword.value.trim()) params.keyword = searchKeyword.value.trim()
 
       const resp = await articlesApi.list(params)
       const data: ArticleListResponse = resp.data
@@ -59,6 +61,7 @@ export const useArticlesStore = defineStore('articles', () => {
     error,
     selectedSources,
     selectedLanguage,
+    searchKeyword,
     fetchArticles,
     toggleImportant,
   }
