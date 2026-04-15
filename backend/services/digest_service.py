@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone  # timezone は generated_at で使用
 
 import structlog
 from openai import AsyncOpenAI
@@ -20,7 +20,8 @@ def _openai_client() -> AsyncOpenAI | None:
 
 
 async def get_today_arxiv_digest(session: AsyncSession) -> ArxivDailyDigestResponse:
-    today_start = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc)
+    # SQLite は timezone-naive な文字列で保存するため naive datetime で比較する
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today_str = date.today().isoformat()
 
     result = await session.scalars(
