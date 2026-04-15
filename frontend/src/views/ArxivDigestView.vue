@@ -25,7 +25,7 @@
           <span class="overall-label">◈ OVERALL SIGNAL</span>
           <span class="overall-meta">{{ data.total_count }}件の論文より生成</span>
         </div>
-        <div class="overall-body">{{ data.overall_digest }}</div>
+        <div class="overall-body markdown-body" v-html="renderMarkdown(data.overall_digest)" />
       </div>
 
       <!-- 論文一覧 -->
@@ -47,7 +47,7 @@
           </a>
 
           <!-- 日本語要約 -->
-          <p v-if="article.summary_ja" class="dcard-summary-ja">{{ article.summary_ja }}</p>
+          <div v-if="article.summary_ja" class="dcard-summary-ja markdown-body" v-html="renderMarkdown(article.summary_ja)" />
           <p v-else-if="!data.overall_digest" class="dcard-no-summary">要約未生成</p>
 
           <!-- 英語 abstract（折りたたみ） -->
@@ -80,7 +80,17 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { marked } from 'marked'
 import { digestApi, type ArxivDailyDigestResponse } from '@/api/client'
+
+marked.setOptions({ breaks: true })
+
+function renderMarkdown(text: string | null | undefined): string {
+  if (!text) return ''
+  const html = marked.parse(text) as string
+  // 外部リンクを新しいタブで開く
+  return html.replace(/<a href="http/g, '<a target="_blank" rel="noopener" href="http')
+}
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -298,6 +308,55 @@ details[open] .dcard-abstract-toggle::before {
   margin-top: 0.4rem;
   padding: 0.5rem 0.75rem;
   border-left: 2px solid var(--border);
+}
+
+/* ── マークダウン共通 ── */
+.markdown-body :deep(p) {
+  margin: 0 0 0.6em;
+  line-height: 1.8;
+}
+.markdown-body :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.markdown-body :deep(h1),
+.markdown-body :deep(h2),
+.markdown-body :deep(h3) {
+  font-family: var(--font-title);
+  font-weight: 600;
+  margin: 1em 0 0.4em;
+  color: var(--text);
+}
+.markdown-body :deep(h2) { font-size: 1rem; }
+.markdown-body :deep(h3) { font-size: 0.9rem; }
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+  padding-left: 1.4em;
+  margin: 0.4em 0 0.6em;
+}
+.markdown-body :deep(li) {
+  margin-bottom: 0.25em;
+  line-height: 1.7;
+}
+.markdown-body :deep(strong) {
+  color: var(--text);
+  font-weight: 600;
+}
+.markdown-body :deep(a) {
+  color: var(--arxiv);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+  transition: opacity var(--t);
+}
+.markdown-body :deep(a:hover) {
+  opacity: 0.75;
+}
+.markdown-body :deep(code) {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--surface-2);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
 }
 
 /* ── タグ ── */

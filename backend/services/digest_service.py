@@ -46,36 +46,47 @@ async def get_today_arxiv_digest(session: AsyncSession) -> ArxivDailyDigestRespo
     )
 
 
+async def _summarize_one(article: Article, client: AsyncOpenAI) -> tuple[Article, str | None]:
+    source_text = article.summary or article.title
+    try:
+        completion = await client.chat.completions.create(
+            model=settings.openai_model,
+            max_tokens=300,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "あなたは学術論文の内容を日本語で分かりやすく要約するアシスタントです。"
+                        "与えられた論文のアブストラクトを日本語で3文程度に要約してください。"
+                        "専門用語は適切に訳し、研究の目的・手法・主な結果を含めてください。"
+                        "出力は**マークダウン形式**で、重要なキーワードは**太字**にしてください。"
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"論文タイトル: {article.title}\n\nアブストラクト: {source_text}",
+                },
+            ],
+        )
+        return article, completion.choices[0].message.content or ""
+    except Exception as e:
+        logger.warning("summary_ja generation failed", article_id=article.id, error=str(e))
+        return article, None
+
+
 async def _generate_missing_summaries(
     session: AsyncSession, articles: list[Article], client: AsyncOpenAI
 ) -> None:
-    for article in articles:
-        if article.summary_ja is not None:
-            continue
-        source_text = article.summary or article.title
-        try:
-            completion = await client.chat.completions.create(
-                model=settings.openai_model,
-                max_tokens=300,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "あなたは学術論文の内容を日本語で分かりやすく要約するアシスタントです。"
-                            "与えられた論文のアブストラクトを日本語で3文程度に要約してください。"
-                            "専門用語は適切に訳し、研究の目的・手法・主な結果を含めてください。"
-                        ),
-                    },
-                    {
-                        "role": "user",
-                        "content": f"論文タイトル: {article.title}\n\nアブストラクト: {source_text}",
-                    },
-                ],
-            )
-            article.summary_ja = completion.choices[0].message.content or ""
-            await session.commit()
-        except Exception as e:
-            logger.warning("summary_ja generation failed", article_id=article.id, error=str(e))
+    targets = [a for a in articles if a.summary_ja is None]
+    if not targets:
+        return
+
+    results = await asyncio.gather(*[_summarize_one(a, client) for a in targets])
+
+    for article, summary_ja in results:
+        if summary_ja is not None:
+            article.summary_ja = summary_ja
+    await session.commit()
 
 
 async def _get_or_create_overall_digest(
@@ -97,7 +108,7 @@ async def _get_or_create_overall_digest(
         return None
 
     titles_block = "\n".join(
-        f"{i + 1}. {a.title}" for i, a in enumerate(articles[:50])
+        f"{i + 1}. [{a.title}]({a.url})" for i, a in enumerate(articles[:50])
     )
     try:
         completion = await client.chat.completions.create(
@@ -110,6 +121,9 @@ async def _get_or_create_overall_digest(
                         "あなたはarXivの最新論文動向を分析する研究アシスタントです。"
                         "今日公開された論文リストを見て、全体的な研究トレンドや注目すべきテーマを"
                         "日本語で包括的にまとめてください。"
+                        "出力は**マークダウン形式**で、見出し・箇条書きを使って構造化してください。"
+                        "論文に言及する際は、入力で与えられた [タイトル](URL) の形式をそのまま使い、"
+                        "クリッカブルなリンクとして含めてください。"
                     ),
                 },
                 {
