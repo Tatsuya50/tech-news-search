@@ -99,6 +99,7 @@ export interface ArxivArticleDigest {
   summary: string | null
   summary_ja: string | null
   tags: string[]
+  is_important: boolean
 }
 
 export interface ArxivDailyDigestResponse {

@@ -39,6 +39,13 @@
             <span class="dcard-meta">
               {{ article.author ?? '—' }} · {{ formatDate(article.published_at) }}
             </span>
+            <button
+              class="star-btn"
+              :class="{ active: article.is_important }"
+              :disabled="toggling.has(article.id)"
+              :title="article.is_important ? '重要解除' : '重要マーク'"
+              @click="onToggleImportant(article)"
+            >{{ article.is_important ? '★' : '☆' }}</button>
           </div>
 
           <!-- タイトル -->
@@ -81,7 +88,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { marked } from 'marked'
-import { digestApi, type ArxivDailyDigestResponse } from '@/api/client'
+import { articlesApi, digestApi, type ArxivArticleDigest, type ArxivDailyDigestResponse } from '@/api/client'
 
 marked.setOptions({ breaks: true })
 
@@ -95,6 +102,19 @@ function renderMarkdown(text: string | null | undefined): string {
 const loading = ref(false)
 const error = ref<string | null>(null)
 const data = ref<ArxivDailyDigestResponse | null>(null)
+const toggling = ref(new Set<number>())
+
+async function onToggleImportant(article: ArxivArticleDigest) {
+  toggling.value.add(article.id)
+  try {
+    const resp = await articlesApi.toggleImportant(article.id)
+    article.is_important = resp.data.is_important
+  } catch {
+    error.value = 'お気に入りの更新に失敗しました'
+  } finally {
+    toggling.value.delete(article.id)
+  }
+}
 
 async function fetchDigest() {
   loading.value = true
@@ -238,6 +258,35 @@ onMounted(fetchDigest)
   font-family: var(--font-mono);
   font-size: 0.6rem;
   color: var(--muted);
+  flex: 1;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.95rem;
+  padding: 0.2rem 0.25rem;
+  line-height: 1;
+  transition: color var(--t), transform var(--t);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.star-btn:hover:not(:disabled) {
+  color: var(--gold);
+  transform: scale(1.25);
+}
+
+.star-btn.active {
+  color: var(--gold);
+  filter: drop-shadow(0 0 6px rgba(255, 200, 87, 0.5));
+}
+
+.star-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .dcard-title {

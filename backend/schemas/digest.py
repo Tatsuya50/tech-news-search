@@ -12,6 +12,7 @@ class ArxivArticleDigest(BaseModel):
     summary: str | None
     summary_ja: str | None
     tags: list[str]
+    is_important: bool
 
     model_config = {"from_attributes": True}
 
