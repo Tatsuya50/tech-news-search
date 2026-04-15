@@ -19,6 +19,11 @@ const router = createRouter({
       name: 'search',
       component: () => import('../views/SearchView.vue'),
     },
+    {
+      path: '/arxiv',
+      name: 'arxiv',
+      component: () => import('../views/ArxivDigestView.vue'),
+    },
   ],
 })
 

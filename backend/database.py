@@ -1,6 +1,7 @@
 import os
 from collections.abc import AsyncGenerator
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -25,3 +26,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # 既存DB向けマイグレーション: summary_ja カラムがなければ追加
+        try:
+            await conn.execute(text("ALTER TABLE articles ADD COLUMN summary_ja TEXT"))
+        except Exception:
+            pass  # カラムが既に存在する場合は無視

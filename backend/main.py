@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import settings
 from backend.database import init_db
-from backend.routers import articles, collector, rag, stats
+from backend.routers import articles, collector, digest, rag, stats
 from backend.services.collector_service import CollectorService
 
 logger = structlog.get_logger()
@@ -21,6 +21,7 @@ app.add_middleware(
 
 app.include_router(articles.router, prefix="/api/v1")
 app.include_router(collector.router, prefix="/api/v1")
+app.include_router(digest.router, prefix="/api/v1")
 app.include_router(rag.router, prefix="/api/v1")
 app.include_router(stats.router, prefix="/api/v1")
 

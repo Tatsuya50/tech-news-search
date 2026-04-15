@@ -90,6 +90,30 @@ export const statsApi = {
   },
 }
 
+export interface ArxivArticleDigest {
+  id: number
+  title: string
+  url: string
+  author: string | null
+  published_at: string
+  summary: string | null
+  summary_ja: string | null
+  tags: string[]
+}
+
+export interface ArxivDailyDigestResponse {
+  date: string
+  articles: ArxivArticleDigest[]
+  total_count: number
+  overall_digest: string | null
+}
+
+export const digestApi = {
+  getArxivToday() {
+    return apiClient.get<ArxivDailyDigestResponse>('/digest/arxiv/today', { timeout: 120000 })
+  },
+}
+
 export interface SearchHistoryItem {
   id: number
   query: string

@@ -11,6 +11,7 @@
           <router-link to="/" class="nav-link" exact-active-class="nav-active">FEED</router-link>
           <router-link to="/important" class="nav-link" active-class="nav-active">SAVED</router-link>
           <router-link to="/search" class="nav-link" active-class="nav-active">SEARCH</router-link>
+          <router-link to="/arxiv" class="nav-link" active-class="nav-active">ARXIV</router-link>
         </nav>
       </div>
     </v-app-bar>

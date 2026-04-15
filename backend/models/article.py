@@ -29,6 +29,7 @@ class Article(Base):
     is_important: Mapped[bool] = mapped_column(Boolean, default=False)
     is_indexed: Mapped[bool] = mapped_column(Boolean, default=False)
     language: Mapped[str] = mapped_column(String(5))       # ja | en
+    summary_ja: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     rag_documents: Mapped[list["RagDocument"]] = relationship(
         back_populates="article", cascade="all, delete-orphan"

@@ -19,6 +19,7 @@ class ArticleResponse(BaseModel):
     is_important: bool
     is_indexed: bool
     language: str
+    summary_ja: str | None = None
 
 
 class ArticleListResponse(BaseModel):
